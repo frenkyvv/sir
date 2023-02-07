@@ -1241,6 +1241,7 @@ const BackBut = styled_components__WEBPACK_IMPORTED_MODULE_6__["default"].div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding-top: 30px;
   padding-bottom: 50px;
 `;
 
