@@ -2647,7 +2647,7 @@ function getMergeFunction(key, options) {
 function getEnumerableOwnPropertySymbols(target) {
 	return Object.getOwnPropertySymbols
 		? Object.getOwnPropertySymbols(target).filter(function(symbol) {
-			return target.propertyIsEnumerable(symbol)
+			return Object.propertyIsEnumerable.call(target, symbol)
 		})
 		: []
 }
@@ -5065,28 +5065,22 @@ var __webpack_unused_export__;
 
 __webpack_unused_export__ = true;
 exports.H = void 0;
-
 const applyTrailingSlashOption = (input, option = `always`) => {
   const hasHtmlSuffix = input.endsWith(`.html`);
   const hasXmlSuffix = input.endsWith(`.xml`);
   const hasPdfSuffix = input.endsWith(`.pdf`);
   if (input === `/`) return input;
-
   if (hasHtmlSuffix || hasXmlSuffix || hasPdfSuffix) {
     option = `never`;
   }
-
   if (option === `always`) {
     return input.endsWith(`/`) ? input : `${input}/`;
   }
-
   if (option === `never`) {
     return input.endsWith(`/`) ? input.slice(0, -1) : input;
   }
-
   return input;
 };
-
 exports.H = applyTrailingSlashOption;
 
 /***/ }),
@@ -5100,13 +5094,9 @@ var __webpack_unused_export__;
 
 __webpack_unused_export__ = true;
 exports.p2 = __webpack_unused_export__ = void 0;
-
 var _scrollHandler = __webpack_require__(1432);
-
 __webpack_unused_export__ = _scrollHandler.ScrollHandler;
-
 var _useScrollRestoration = __webpack_require__(4855);
-
 exports.p2 = _useScrollRestoration.useScrollRestoration;
 
 /***/ }),
@@ -5118,123 +5108,97 @@ exports.p2 = _useScrollRestoration.useScrollRestoration;
 
 
 var _interopRequireDefault = __webpack_require__(4836);
-
 exports.__esModule = true;
 exports.ScrollHandler = exports.ScrollContext = void 0;
-
 var _assertThisInitialized2 = _interopRequireDefault(__webpack_require__(6115));
-
 var _inheritsLoose2 = _interopRequireDefault(__webpack_require__(7867));
-
 var React = _interopRequireWildcard(__webpack_require__(795));
-
 var _propTypes = _interopRequireDefault(__webpack_require__(5697));
-
 var _sessionStorage = __webpack_require__(1142);
-
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
-
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
-
 var ScrollContext = /*#__PURE__*/React.createContext(new _sessionStorage.SessionStorage());
 exports.ScrollContext = ScrollContext;
 ScrollContext.displayName = "GatsbyScrollContext";
-
 var ScrollHandler = /*#__PURE__*/function (_React$Component) {
   (0, _inheritsLoose2.default)(ScrollHandler, _React$Component);
-
   function ScrollHandler() {
     var _this;
-
     for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
       args[_key] = arguments[_key];
     }
-
     _this = _React$Component.call.apply(_React$Component, [this].concat(args)) || this;
     _this._stateStorage = new _sessionStorage.SessionStorage();
     _this._isTicking = false;
     _this._latestKnownScrollY = 0;
-
     _this.scrollListener = function () {
       _this._latestKnownScrollY = window.scrollY;
-
       if (!_this._isTicking) {
         _this._isTicking = true;
         requestAnimationFrame(_this._saveScroll.bind((0, _assertThisInitialized2.default)(_this)));
       }
     };
-
     _this.windowScroll = function (position, prevProps) {
       if (_this.shouldUpdateScroll(prevProps, _this.props)) {
         window.scrollTo(0, position);
       }
     };
-
     _this.scrollToHash = function (hash, prevProps) {
       var node = document.getElementById(hash.substring(1));
-
       if (node && _this.shouldUpdateScroll(prevProps, _this.props)) {
         node.scrollIntoView();
       }
     };
-
     _this.shouldUpdateScroll = function (prevRouterProps, routerProps) {
       var shouldUpdateScroll = _this.props.shouldUpdateScroll;
-
       if (!shouldUpdateScroll) {
         return true;
-      } // Hack to allow accessing this._stateStorage.
+      }
 
-
+      // Hack to allow accessing this._stateStorage.
       return shouldUpdateScroll.call((0, _assertThisInitialized2.default)(_this), prevRouterProps, routerProps);
     };
-
     return _this;
   }
-
   var _proto = ScrollHandler.prototype;
-
   _proto._saveScroll = function _saveScroll() {
     var key = this.props.location.key || null;
-
     if (key) {
       this._stateStorage.save(this.props.location, key, this._latestKnownScrollY);
     }
-
     this._isTicking = false;
   };
-
   _proto.componentDidMount = function componentDidMount() {
     window.addEventListener("scroll", this.scrollListener);
     var scrollPosition;
     var _this$props$location = this.props.location,
-        key = _this$props$location.key,
-        hash = _this$props$location.hash;
-
+      key = _this$props$location.key,
+      hash = _this$props$location.hash;
     if (key) {
       scrollPosition = this._stateStorage.read(this.props.location, key);
     }
 
-    if (scrollPosition) {
-      this.windowScroll(scrollPosition, undefined);
-    } else if (hash) {
+    /** If a hash is present in the browser url as the component mounts (i.e. the user is navigating
+     * from an external website) then scroll to the hash instead of any previously stored scroll
+     * position. */
+    if (hash) {
       this.scrollToHash(decodeURI(hash), undefined);
+    } else if (scrollPosition) {
+      this.windowScroll(scrollPosition, undefined);
     }
   };
-
   _proto.componentWillUnmount = function componentWillUnmount() {
     window.removeEventListener("scroll", this.scrollListener);
   };
-
   _proto.componentDidUpdate = function componentDidUpdate(prevProps) {
     var _this$props$location2 = this.props.location,
-        hash = _this$props$location2.hash,
-        key = _this$props$location2.key;
+      hash = _this$props$location2.hash,
+      key = _this$props$location2.key;
     var scrollPosition;
-
     if (key) {
       scrollPosition = this._stateStorage.read(this.props.location, key);
     }
+
     /**  There are two pieces of state: the browser url and
      * history state which keeps track of scroll position
      * Native behaviour prescribes that we ought to restore scroll position
@@ -5244,23 +5208,19 @@ var ScrollHandler = /*#__PURE__*/function (_React$Component) {
      * contains a hash, we scroll to it
      */
 
-
     if (hash) {
       this.scrollToHash(decodeURI(hash), prevProps);
     } else {
       this.windowScroll(scrollPosition, prevProps);
     }
   };
-
   _proto.render = function render() {
     return /*#__PURE__*/React.createElement(ScrollContext.Provider, {
       value: this._stateStorage
     }, this.props.children);
   };
-
   return ScrollHandler;
 }(React.Component);
-
 exports.ScrollHandler = ScrollHandler;
 ScrollHandler.propTypes = {
   shouldUpdateScroll: _propTypes.default.func,
@@ -5280,33 +5240,25 @@ exports.__esModule = true;
 exports.SessionStorage = void 0;
 var STATE_KEY_PREFIX = "@@scroll|";
 var GATSBY_ROUTER_SCROLL_STATE = "___GATSBY_REACT_ROUTER_SCROLL";
-
 var SessionStorage = /*#__PURE__*/function () {
   function SessionStorage() {}
-
   var _proto = SessionStorage.prototype;
-
   _proto.read = function read(location, key) {
     var stateKey = this.getStateKey(location, key);
-
     try {
       var value = window.sessionStorage.getItem(stateKey);
       return value ? JSON.parse(value) : 0;
     } catch (e) {
       if (false) {}
-
       if (window && window[GATSBY_ROUTER_SCROLL_STATE] && window[GATSBY_ROUTER_SCROLL_STATE][stateKey]) {
         return window[GATSBY_ROUTER_SCROLL_STATE][stateKey];
       }
-
       return 0;
     }
   };
-
   _proto.save = function save(location, key, value) {
     var stateKey = this.getStateKey(location, key);
     var storedValue = JSON.stringify(value);
-
     try {
       window.sessionStorage.setItem(stateKey, storedValue);
     } catch (e) {
@@ -5316,19 +5268,15 @@ var SessionStorage = /*#__PURE__*/function () {
         window[GATSBY_ROUTER_SCROLL_STATE] = {};
         window[GATSBY_ROUTER_SCROLL_STATE][stateKey] = JSON.parse(storedValue);
       }
-
       if (false) {}
     }
   };
-
   _proto.getStateKey = function getStateKey(location, key) {
     var stateKeyBase = "" + STATE_KEY_PREFIX + location.pathname;
     return key === null || typeof key === "undefined" ? stateKeyBase : stateKeyBase + "|" + key;
   };
-
   return SessionStorage;
 }();
-
 exports.SessionStorage = SessionStorage;
 
 /***/ }),
@@ -5341,13 +5289,9 @@ exports.SessionStorage = SessionStorage;
 
 exports.__esModule = true;
 exports.useScrollRestoration = useScrollRestoration;
-
 var _scrollHandler = __webpack_require__(1432);
-
 var _react = __webpack_require__(795);
-
 var _reachRouter = __webpack_require__(7896);
-
 function useScrollRestoration(identifier) {
   var location = (0, _reachRouter.useLocation)();
   var state = (0, _react.useContext)(_scrollHandler.ScrollContext);
@@ -5377,30 +5321,23 @@ function useScrollRestoration(identifier) {
 
 
 var _interopRequireDefault = __webpack_require__(4836);
-
 exports.__esModule = true;
 exports.onRenderBody = void 0;
-
 var _react = _interopRequireDefault(__webpack_require__(795));
-
 var _gatsbyScript = __webpack_require__(3521);
-
 var _getForwards = __webpack_require__(7730);
-
 var _integration = __webpack_require__(2911);
-
 const onRenderBody = ({
   pathname,
   setHeadComponents
 }) => {
   const collectedScripts = _gatsbyScript.collectedScriptsByPage.get(pathname);
-
   if (!(collectedScripts !== null && collectedScripts !== void 0 && collectedScripts.length)) {
     return;
   }
+  const forwards = (0, _getForwards.getForwards)(collectedScripts);
 
-  const forwards = (0, _getForwards.getForwards)(collectedScripts); // Adapted from https://github.com/BuilderIO/partytown/blob/main/src/react/snippet.tsx to only include SSR logic
-
+  // Adapted from https://github.com/BuilderIO/partytown/blob/main/src/react/snippet.tsx to only include SSR logic
   setHeadComponents([/*#__PURE__*/_react.default.createElement("script", {
     key: "partytown",
     "data-partytown": "",
@@ -5413,11 +5350,11 @@ const onRenderBody = ({
           document.currentScript.dataset.partytown=""
         `
     }
-  })]); // Clear scripts after we've used them to avoid leaky behavior
+  })]);
 
+  // Clear scripts after we've used them to avoid leaky behavior
   _gatsbyScript.collectedScriptsByPage.delete(pathname);
 };
-
 exports.onRenderBody = onRenderBody;
 //# sourceMappingURL=gatsby-ssr.js.map
 
@@ -5431,7 +5368,6 @@ exports.onRenderBody = onRenderBody;
 
 exports.__esModule = true;
 exports.getForwards = getForwards;
-
 function getForwards(collectedScripts) {
   return collectedScripts === null || collectedScripts === void 0 ? void 0 : collectedScripts.flatMap(script => (script === null || script === void 0 ? void 0 : script.forward) || []);
 }
@@ -5874,7 +5810,10 @@ var find_path = __webpack_require__(9755);
    * At least one of critical resources failed to load
    */Error:`error`,/**
    * Resources loaded successfully
-   */Success:`success`};const preferDefault=m=>m&&m.default||m;const stripSurroundingSlashes=s=>{s=s[0]===`/`?s.slice(1):s;s=s.endsWith(`/`)?s.slice(0,-1):s;return s;};const createPageDataUrl=rawPath=>{const[path,maybeSearch]=rawPath.split(`?`);const fixedPath=path===`/`?`index`:stripSurroundingSlashes(path);return`${""}/page-data/${fixedPath}/page-data.json${maybeSearch?`?${maybeSearch}`:``}`;};function doFetch(url,method=`GET`){return new Promise(resolve=>{const req=new XMLHttpRequest();req.open(method,url,true);req.onreadystatechange=()=>{if(req.readyState==4){resolve(req);}};req.send(null);});}const doesConnectionSupportPrefetch=()=>{if(`connection`in navigator&&typeof navigator.connection!==`undefined`){if((navigator.connection.effectiveType||``).includes(`2g`)){return false;}if(navigator.connection.saveData){return false;}}return true;};// Regex that matches common search crawlers
+   */Success:`success`};const preferDefault=m=>m&&m.default||m;const stripSurroundingSlashes=s=>{s=s[0]===`/`?s.slice(1):s;s=s.endsWith(`/`)?s.slice(0,-1):s;return s;};const createPageDataUrl=rawPath=>{const[path,maybeSearch]=rawPath.split(`?`);const fixedPath=path===`/`?`index`:stripSurroundingSlashes(path);return`${""}/page-data/${fixedPath}/page-data.json${maybeSearch?`?${maybeSearch}`:``}`;};/**
+ * Utility to check the path that goes into doFetch for e.g. potential malicious intentions.
+ * It checks for "//" because with this you could do a fetch request to a different domain.
+ */const shouldAbortFetch=rawPath=>rawPath.startsWith(`//`);function doFetch(url,method=`GET`){return new Promise(resolve=>{const req=new XMLHttpRequest();req.open(method,url,true);req.onreadystatechange=()=>{if(req.readyState==4){resolve(req);}};req.send(null);});}const doesConnectionSupportPrefetch=()=>{if(`connection`in navigator&&typeof navigator.connection!==`undefined`){if((navigator.connection.effectiveType||``).includes(`2g`)){return false;}if(navigator.connection.saveData){return false;}}return true;};// Regex that matches common search crawlers
 const BOT_REGEX=/bot|crawler|spider|crawling/i;const toPageResources=(pageData,component=null,head)=>{var _pageData$slicesMap;const page={componentChunkName:pageData.componentChunkName,path:pageData.path,webpackCompilationHash:pageData.webpackCompilationHash,matchPath:pageData.matchPath,staticQueryHashes:pageData.staticQueryHashes,getServerDataError:pageData.getServerDataError,slicesMap:(_pageData$slicesMap=pageData.slicesMap)!==null&&_pageData$slicesMap!==void 0?_pageData$slicesMap:{}};return{component,head,json:pageData.result,page};};function waitForResponse(response){return new Promise(resolve=>{try{const result=response.readRoot();resolve(result);}catch(err){if(Object.hasOwnProperty.call(err,`_response`)&&Object.hasOwnProperty.call(err,`_status`)){setTimeout(()=>{waitForResponse(response).then(resolve);},200);}else{throw err;}}});}class BaseLoader{constructor(loadComponent,matchPaths){this.inFlightNetworkRequests=new Map();// Map of pagePath -> Page. Where Page is an object with: {
 //   status: PageResourceStatus.Success || PageResourceStatus.Error,
 //   payload: PageResources, // undefined if PageResourceStatus.Error
@@ -5910,7 +5849,7 @@ return this.fetchPartialHydrationJson(Object.assign(loadObj,{pagePath:`/404.html
 if(status===500){return this.fetchPartialHydrationJson(Object.assign(loadObj,{pagePath:`/500.html`,internalServerError:true}));}// Handle everything else, including status === 0, and 503s. Should retry
 if(retries<3){return this.fetchPartialHydrationJson(Object.assign(loadObj,{retries:retries+1}));}// Retried 3 times already, result is an error.
 return Object.assign(loadObj,{status:PageResourceStatus.Error});});}loadPageDataJson(rawPath){const pagePath=findPath(rawPath);if(this.pageDataDb.has(pagePath)){const pageData=this.pageDataDb.get(pagePath);if(true){return Promise.resolve(pageData);}}return this.fetchPageDataJson({pagePath}).then(pageData=>{this.pageDataDb.set(pagePath,pageData);return pageData;});}loadPartialHydrationJson(rawPath){const pagePath=findPath(rawPath);if(this.partialHydrationDb.has(pagePath)){const pageData=this.partialHydrationDb.get(pagePath);if(true){return Promise.resolve(pageData);}}return this.fetchPartialHydrationJson({pagePath}).then(pageData=>{this.partialHydrationDb.set(pagePath,pageData);return pageData;});}loadSliceDataJson(sliceName){if(this.slicesDataDb.has(sliceName)){const jsonPayload=this.slicesDataDb.get(sliceName);return Promise.resolve({sliceName,jsonPayload});}const url=`${""}/slice-data/${sliceName}.json`;return doFetch(url,`GET`).then(res=>{const jsonPayload=JSON.parse(res.responseText);this.slicesDataDb.set(sliceName,jsonPayload);return{sliceName,jsonPayload};});}findMatchPath(rawPath){return findMatchPath(rawPath);}// TODO check all uses of this and whether they use undefined for page resources not exist
-loadPage(rawPath){const pagePath=findPath(rawPath);if(this.pageDb.has(pagePath)){const page=this.pageDb.get(pagePath);if(true){if(page.error){return{error:page.error,status:page.status};}return Promise.resolve(page.payload);}}if(this.inFlightDb.has(pagePath)){return this.inFlightDb.get(pagePath);}const loadDataPromises=[this.loadAppData(),this.loadPageDataJson(pagePath)];if(false){}const inFlightPromise=Promise.all(loadDataPromises).then(allData=>{const[appDataResponse,pageDataResponse,rscDataResponse]=allData;if(pageDataResponse.status===PageResourceStatus.Error||(rscDataResponse===null||rscDataResponse===void 0?void 0:rscDataResponse.status)===PageResourceStatus.Error){return{status:PageResourceStatus.Error};}let pageData=pageDataResponse.payload;const{componentChunkName,staticQueryHashes:pageStaticQueryHashes=[],slicesMap={}}=pageData;const finalResult={};const dedupedSliceNames=Array.from(new Set(Object.values(slicesMap)));const loadSlice=slice=>{if(this.slicesDb.has(slice.name)){return this.slicesDb.get(slice.name);}else if(this.sliceInflightDb.has(slice.name)){return this.sliceInflightDb.get(slice.name);}const inFlight=this.loadComponent(slice.componentChunkName).then(component=>{return{component:preferDefault(component),sliceContext:slice.result.sliceContext,data:slice.result.data};});this.sliceInflightDb.set(slice.name,inFlight);inFlight.then(results=>{this.slicesDb.set(slice.name,results);this.sliceInflightDb.delete(slice.name);});return inFlight;};return Promise.all(dedupedSliceNames.map(sliceName=>this.loadSliceDataJson(sliceName))).then(slicesData=>{const slices=[];const dedupedStaticQueryHashes=[...pageStaticQueryHashes];for(const{jsonPayload,sliceName}of Object.values(slicesData)){slices.push({name:sliceName,...jsonPayload});for(const staticQueryHash of jsonPayload.staticQueryHashes){if(!dedupedStaticQueryHashes.includes(staticQueryHash)){dedupedStaticQueryHashes.push(staticQueryHash);}}}const loadChunkPromises=[Promise.all(slices.map(loadSlice)),this.loadComponent(componentChunkName,`head`)];if(true){loadChunkPromises.push(this.loadComponent(componentChunkName));}// In develop we have separate chunks for template and Head components
+loadPage(rawPath){const pagePath=findPath(rawPath);if(this.pageDb.has(pagePath)){const page=this.pageDb.get(pagePath);if(true){if(page.error){return Promise.resolve({error:page.error,status:page.status});}return Promise.resolve(page.payload);}}if(this.inFlightDb.has(pagePath)){return this.inFlightDb.get(pagePath);}const loadDataPromises=[this.loadAppData(),this.loadPageDataJson(pagePath)];if(false){}const inFlightPromise=Promise.all(loadDataPromises).then(allData=>{const[appDataResponse,pageDataResponse,rscDataResponse]=allData;if(pageDataResponse.status===PageResourceStatus.Error||(rscDataResponse===null||rscDataResponse===void 0?void 0:rscDataResponse.status)===PageResourceStatus.Error){return{status:PageResourceStatus.Error};}let pageData=pageDataResponse.payload;const{componentChunkName,staticQueryHashes:pageStaticQueryHashes=[],slicesMap={}}=pageData;const finalResult={};const dedupedSliceNames=Array.from(new Set(Object.values(slicesMap)));const loadSlice=slice=>{if(this.slicesDb.has(slice.name)){return this.slicesDb.get(slice.name);}else if(this.sliceInflightDb.has(slice.name)){return this.sliceInflightDb.get(slice.name);}const inFlight=this.loadComponent(slice.componentChunkName).then(component=>{return{component:preferDefault(component),sliceContext:slice.result.sliceContext,data:slice.result.data};});this.sliceInflightDb.set(slice.name,inFlight);inFlight.then(results=>{this.slicesDb.set(slice.name,results);this.sliceInflightDb.delete(slice.name);});return inFlight;};return Promise.all(dedupedSliceNames.map(sliceName=>this.loadSliceDataJson(sliceName))).then(slicesData=>{const slices=[];const dedupedStaticQueryHashes=[...pageStaticQueryHashes];for(const{jsonPayload,sliceName}of Object.values(slicesData)){slices.push({name:sliceName,...jsonPayload});for(const staticQueryHash of jsonPayload.staticQueryHashes){if(!dedupedStaticQueryHashes.includes(staticQueryHash)){dedupedStaticQueryHashes.push(staticQueryHash);}}}const loadChunkPromises=[Promise.all(slices.map(loadSlice)),this.loadComponent(componentChunkName,`head`)];if(true){loadChunkPromises.push(this.loadComponent(componentChunkName));}// In develop we have separate chunks for template and Head components
 // to enable HMR (fast refresh requires single exports).
 // In production we have shared chunk with both exports. Double loadComponent here
 // will be deduped by webpack runtime resulting in single request and single module
@@ -5935,14 +5874,14 @@ this.loadPageDataJson(pagePath));}}hovering(rawPath){this.loadPage(rawPath);}get
 return this.loadAppData(retries+1);}// Handle 200
 if(status===200){try{const jsonPayload=JSON.parse(responseText);if(jsonPayload.webpackCompilationHash===undefined){throw new Error(`not a valid app-data response`);}appData=jsonPayload;}catch(err){// continue regardless of error
 }}return appData;});}}const createComponentUrls=componentChunkName=>(window.___chunkMapping[componentChunkName]||[]).map(chunk=>""+chunk);class ProdLoader extends (/* unused pure expression or super */ null && (BaseLoader)){constructor(asyncRequires,matchPaths,pageData){const loadComponent=(chunkName,exportType=`components`)=>{if(true){exportType=`components`;}if(!asyncRequires[exportType][chunkName]){throw new Error(`We couldn't find the correct component chunk with the name "${chunkName}"`);}return asyncRequires[exportType][chunkName]()// loader will handle the case when component is error
-.catch(err=>err);};super(loadComponent,matchPaths);if(pageData){this.pageDataDb.set(findPath(pageData.path),{pagePath:pageData.path,payload:pageData,status:`success`});}}doPrefetch(pagePath){return super.doPrefetch(pagePath).then(result=>{if(result.status!==PageResourceStatus.Success){return Promise.resolve();}const pageData=result.payload;const chunkName=pageData.componentChunkName;const componentUrls=createComponentUrls(chunkName);return Promise.all(componentUrls.map(prefetchHelper)).then(()=>pageData);});}loadPageDataJson(rawPath){return super.loadPageDataJson(rawPath).then(data=>{if(data.notFound){// check if html file exist using HEAD request:
+.catch(err=>err);};super(loadComponent,matchPaths);if(pageData){this.pageDataDb.set(findPath(pageData.path),{pagePath:pageData.path,payload:pageData,status:`success`});}}doPrefetch(pagePath){return super.doPrefetch(pagePath).then(result=>{if(result.status!==PageResourceStatus.Success){return Promise.resolve();}const pageData=result.payload;const chunkName=pageData.componentChunkName;const componentUrls=createComponentUrls(chunkName);return Promise.all(componentUrls.map(prefetchHelper)).then(()=>pageData);});}loadPageDataJson(rawPath){return super.loadPageDataJson(rawPath).then(data=>{if(data.notFound){if(shouldAbortFetch(rawPath)){return data;}// check if html file exist using HEAD request:
 // if it does we should navigate to it instead of showing 404
 return doFetch(rawPath,`HEAD`).then(req=>{if(req.status===200){// page (.html file) actually exist (or we asked for 404 )
 // returning page resources status as errored to trigger
 // regular browser navigation to given page
 return{status:PageResourceStatus.Error};}// if HEAD request wasn't 200, return notFound result
 // and show 404 page
-return data;});}return data;});}loadPartialHydrationJson(rawPath){return super.loadPartialHydrationJson(rawPath).then(data=>{if(data.notFound){// check if html file exist using HEAD request:
+return data;});}return data;});}loadPartialHydrationJson(rawPath){return super.loadPartialHydrationJson(rawPath).then(data=>{if(data.notFound){if(shouldAbortFetch(rawPath)){return data;}// check if html file exist using HEAD request:
 // if it does we should navigate to it instead of showing 404
 return doFetch(rawPath,`HEAD`).then(req=>{if(req.status===200){// page (.html file) actually exist (or we asked for 404 )
 // returning page resources status as errored to trigger
@@ -6005,8 +5944,8 @@ const create_content_digest_hasher = hasher({
     set: false
   }
 });
-
 const hashPrimitive = input => external_crypto_.createHash(`md5`).update(input).digest(`hex`);
+
 /**
  * Hashes an input using md5 hash of hexadecimal digest.
  *
@@ -6014,12 +5953,10 @@ const hashPrimitive = input => external_crypto_.createHash(`md5`).update(input).
  * @return The content digest
  */
 
-
 const createContentDigest = input => {
   if (typeof input === `object` && !Buffer.isBuffer(input)) {
     return create_content_digest_hasher.hash(input);
   }
-
   return hashPrimitive(input);
 };
 // EXTERNAL MODULE: ./.cache/slice/context.js
@@ -6035,7 +5972,7 @@ const InlineSlice=({sliceName,allowEmpty,children,...sliceProps})=>{const slices
 "use client";function Slice(props){if(true){// we use sliceName internally, so remap alias to sliceName
 const internalProps={...props,sliceName:props.alias};delete internalProps.alias;delete internalProps.__renderedByLocation;const slicesContext=(0,index_js_.useContext)(context.SlicesContext);// validate props
 const propErrors=validateSliceProps(props);if(Object.keys(propErrors).length){throw new SlicePropsError(slicesContext.renderEnvironment===`browser`,internalProps.sliceName,propErrors,props.__renderedByLocation);}if(slicesContext.renderEnvironment===`server`){return/*#__PURE__*/index_js_default().createElement(ServerSlice,internalProps);}else if(slicesContext.renderEnvironment===`browser`){// in the browser, we'll just render the component as is
-return/*#__PURE__*/index_js_default().createElement(InlineSlice,internalProps);}else if(slicesContext.renderEnvironment===`engines`){// if we're in SSR, we'll just render the component as is
+return/*#__PURE__*/index_js_default().createElement(InlineSlice,internalProps);}else if(slicesContext.renderEnvironment===`engines`||slicesContext.renderEnvironment===`dev-ssr`){// if we're in SSR, we'll just render the component as is
 return/*#__PURE__*/index_js_default().createElement(InlineSlice,internalProps);}else if(slicesContext.renderEnvironment===`slices`){// we are not yet supporting nested slices
 let additionalContextMessage=``;// just in case generating additional contextual information fails, we still want the base message to show
 // and not show another cryptic error message
@@ -6053,54 +5990,58 @@ const prefetchPathname=loader.enqueue;function graphql(){throw new Error(`It app
 
 /***/ }),
 
-/***/ 2460:
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "VALID_NODE_NAMES": () => (/* binding */ VALID_NODE_NAMES)
-/* harmony export */ });
-const VALID_NODE_NAMES=[`link`,`meta`,`style`,`title`,`base`,`noscript`,`script`];
-
-/***/ }),
-
 /***/ 923:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "applyHtmlAndBodyAttributesSSR": () => (/* binding */ applyHtmlAndBodyAttributesSSR),
+/* harmony export */   "getValidHeadNodesAndAttributesSSR": () => (/* binding */ getValidHeadNodesAndAttributesSSR),
 /* harmony export */   "headHandlerForSSR": () => (/* binding */ headHandlerForSSR)
 /* harmony export */ });
-const React=__webpack_require__(795);const{grabMatchParams}=__webpack_require__(9755);const{createElement}=__webpack_require__(795);const{StaticQueryContext}=__webpack_require__(7076);const{headExportValidator,filterHeadProps,warnForInvalidTags}=__webpack_require__(8317);const{ServerLocation,Router}=__webpack_require__(7896);const{renderToString}=__webpack_require__(922);const{parse}=__webpack_require__(698);const{VALID_NODE_NAMES}=__webpack_require__(2460);function headHandlerForSSR({pageComponent,setHeadComponents,staticQueryContext,pageData,pagePath}){if(pageComponent!==null&&pageComponent!==void 0&&pageComponent.Head){headExportValidator(pageComponent.Head);function HeadRouteHandler(props){var _pageData$result,_pageData$result$page;const _props={...props,...pageData.result,params:{...grabMatchParams(props.location.pathname),...(((_pageData$result=pageData.result)===null||_pageData$result===void 0?void 0:(_pageData$result$page=_pageData$result.pageContext)===null||_pageData$result$page===void 0?void 0:_pageData$result$page.__params)||{})}};return createElement(pageComponent.Head,filterHeadProps(_props));}const routerElement=/*#__PURE__*/React.createElement(StaticQueryContext.Provider,{value:staticQueryContext},/*#__PURE__*/React.createElement(ServerLocation,{url:`${""}${pagePath}`},/*#__PURE__*/React.createElement(Router,{baseuri:"",component:({children})=>/*#__PURE__*/React.createElement(React.Fragment,null,children)},/*#__PURE__*/React.createElement(HeadRouteHandler,{path:"/*"}))));// extract head nodes from string
-const rawString=renderToString(routerElement);const headNodes=parse(rawString).childNodes;const validHeadNodes=[];const seenIds=new Map();for(const node of headNodes){var _node$attributes;const{rawTagName}=node;const id=(_node$attributes=node.attributes)===null||_node$attributes===void 0?void 0:_node$attributes.id;if(!VALID_NODE_NAMES.includes(rawTagName)){warnForInvalidTags(rawTagName);}else{let element;const attributes={...node.attributes,"data-gatsby-head":true};if(rawTagName===`script`){element=/*#__PURE__*/React.createElement("script",Object.assign({},attributes,{dangerouslySetInnerHTML:{__html:node.text}}));}else{element=node.textContent.length>0?/*#__PURE__*/React.createElement(node.rawTagName,attributes,node.textContent):/*#__PURE__*/React.createElement(node.rawTagName,attributes);}if(id){if(!seenIds.has(id)){validHeadNodes.push(element);seenIds.set(id,validHeadNodes.length-1);}else{const indexOfPreviouslyInsertedNode=seenIds.get(id);validHeadNodes[indexOfPreviouslyInsertedNode]=element;}}else{validHeadNodes.push(element);}}}setHeadComponents(validHeadNodes);}}
+/* harmony import */ var _api_runner_ssr__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(4067);
+const React=__webpack_require__(795);const{grabMatchParams}=__webpack_require__(9755);const{StaticQueryContext}=__webpack_require__(7076);const{headExportValidator,filterHeadProps,isElementType,isValidNodeName,warnForInvalidTag}=__webpack_require__(9706);const{ServerLocation,Router}=__webpack_require__(7896);const{renderToString}=__webpack_require__(922);const{parse}=__webpack_require__(698);function applyHtmlAndBodyAttributesSSR(htmlAndBodyAttributes,{setHtmlAttributes,setBodyAttributes}){if(!htmlAndBodyAttributes)return;const{html,body}=htmlAndBodyAttributes;setHtmlAttributes(html);setBodyAttributes(body);}function getValidHeadNodesAndAttributesSSR(rootNode,htmlAndBodyAttributes={html:{},body:{}}){const seenIds=new Map();const validHeadNodes=[];// Filter out non-element nodes before looping since we don't care about them
+for(const node of rootNode.childNodes){var _node$attributes;const{rawTagName}=node;const id=(_node$attributes=node.attributes)===null||_node$attributes===void 0?void 0:_node$attributes.id;if(!isElementType(node))continue;if(isValidNodeName(rawTagName)){if(rawTagName===`html`||rawTagName===`body`){htmlAndBodyAttributes[rawTagName]={...htmlAndBodyAttributes[rawTagName],...node.attributes};}else{let element;const attributes={...node.attributes,"data-gatsby-head":true};if(rawTagName===`script`||rawTagName===`style`){element=/*#__PURE__*/React.createElement(node.rawTagName,Object.assign({},attributes,{dangerouslySetInnerHTML:{__html:node.text}}));}else{element=node.textContent.length>0?/*#__PURE__*/React.createElement(node.rawTagName,attributes,node.textContent):/*#__PURE__*/React.createElement(node.rawTagName,attributes);}if(id){if(!seenIds.has(id)){validHeadNodes.push(element);seenIds.set(id,validHeadNodes.length-1);}else{const indexOfPreviouslyInsertedNode=seenIds.get(id);validHeadNodes[indexOfPreviouslyInsertedNode]=element;}}else{validHeadNodes.push(element);}}}else{warnForInvalidTag(rawTagName);}if(node.childNodes.length){validHeadNodes.push(...getValidHeadNodesAndAttributesSSR(node,htmlAndBodyAttributes).validHeadNodes);}}return{validHeadNodes,htmlAndBodyAttributes};}function headHandlerForSSR({pageComponent,setHeadComponents,setHtmlAttributes,setBodyAttributes,staticQueryContext,pageData,pagePath}){if(pageComponent!==null&&pageComponent!==void 0&&pageComponent.Head){headExportValidator(pageComponent.Head);function HeadRouteHandler(props){var _pageData$result,_pageData$result$page;const _props={...props,...pageData.result,params:{...grabMatchParams(props.location.pathname),...(((_pageData$result=pageData.result)===null||_pageData$result===void 0?void 0:(_pageData$result$page=_pageData$result.pageContext)===null||_pageData$result$page===void 0?void 0:_pageData$result$page.__params)||{})}};const HeadElement=/*#__PURE__*/React.createElement(pageComponent.Head,filterHeadProps(_props));const headWithWrapRootElement=(0,_api_runner_ssr__WEBPACK_IMPORTED_MODULE_0__.apiRunner)(`wrapRootElement`,{element:HeadElement},HeadElement,({result})=>{return{element:result};}).pop();return headWithWrapRootElement;}const routerElement=/*#__PURE__*/React.createElement(StaticQueryContext.Provider,{value:staticQueryContext},/*#__PURE__*/React.createElement(ServerLocation,{url:`${""}${pagePath}`},/*#__PURE__*/React.createElement(Router,{baseuri:"",component:({children})=>/*#__PURE__*/React.createElement(React.Fragment,null,children)},/*#__PURE__*/React.createElement(HeadRouteHandler,{path:"/*"}))));const rawString=renderToString(routerElement);const rootNode=parse(rawString);const{validHeadNodes,htmlAndBodyAttributes}=getValidHeadNodesAndAttributesSSR(rootNode);applyHtmlAndBodyAttributesSSR(htmlAndBodyAttributes,{setHtmlAttributes,setBodyAttributes});setHeadComponents(validHeadNodes);}}
 
 /***/ }),
 
-/***/ 8317:
+/***/ 9706:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
+// ESM COMPAT FLAG
 __webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "diffNodes": () => (/* binding */ diffNodes),
-/* harmony export */   "filterHeadProps": () => (/* binding */ filterHeadProps),
-/* harmony export */   "headExportValidator": () => (/* binding */ headExportValidator),
-/* harmony export */   "isEqualNode": () => (/* binding */ isEqualNode),
-/* harmony export */   "warnForInvalidTags": () => (/* binding */ warnForInvalidTags)
-/* harmony export */ });
+
+// EXPORTS
+__webpack_require__.d(__webpack_exports__, {
+  "applyHtmlAndBodyAttributes": () => (/* binding */ applyHtmlAndBodyAttributes),
+  "diffNodes": () => (/* binding */ diffNodes),
+  "filterHeadProps": () => (/* binding */ filterHeadProps),
+  "getValidHeadNodesAndAttributes": () => (/* binding */ getValidHeadNodesAndAttributes),
+  "headExportValidator": () => (/* binding */ headExportValidator),
+  "isElementType": () => (/* binding */ isElementType),
+  "isEqualNode": () => (/* binding */ isEqualNode),
+  "isValidNodeName": () => (/* binding */ isValidNodeName),
+  "removeHtmlAndBodyAttributes": () => (/* binding */ removeHtmlAndBodyAttributes),
+  "removePrevHeadElements": () => (/* binding */ removePrevHeadElements),
+  "warnForInvalidTag": () => (/* binding */ warnForInvalidTag)
+});
+
+;// CONCATENATED MODULE: ./.cache/head/constants.js
+const constants_VALID_NODE_NAMES=[`link`,`meta`,`style`,`title`,`base`,`noscript`,`script`,`html`,`body`];
+;// CONCATENATED MODULE: ./.cache/head/utils.js
 /**
  * Filter the props coming from a page down to just the ones that are relevant for head.
  * This e.g. filters out properties that are undefined during SSR.
- */function filterHeadProps(input){return{location:{pathname:input.location.pathname},params:input.params,data:input.data||{},pageContext:input.pageContext};}/**
- * Throw error if Head export is not a valid
+ */function filterHeadProps(input){return{location:{pathname:input.location.pathname},params:input.params,data:input.data||{},serverData:input.serverData,pageContext:input.pageContext};}/**
+ * Throw error if Head export is not a valid function
  */function headExportValidator(head){if(typeof head!==`function`)throw new Error(`Expected "Head" export to be a function got "${typeof head}".`);}/**
  * Warn once for same messsage
  */let warnOnce=_=>{};if(false){}/**
- * Warn for invalid tags in head.
+ * Warn for invalid tags in Head which may have been directly added or introduced by `wrapRootElement`
  * @param {string} tagName
- */function warnForInvalidTags(tagName){if(false){}}/**
+ */function warnForInvalidTag(tagName){if(false){}}function createWarningForInvalidTag(tagName){return`<${tagName}> is not a valid head element. Please use one of the following: ${VALID_NODE_NAMES.join(`, `)}.\n\nAlso make sure that wrapRootElement in gatsby-ssr/gatsby-browser doesn't contain UI elements: https://gatsby.dev/invalid-head-elements`;}/**
  * When a `nonce` is present on an element, browsers such as Chrome and Firefox strip it out of the
  * actual HTML attributes for security reasons *when the element is added to the document*. Thus,
  * given two equivalent elements that have nonces, `Element,isEqualNode()` will return false if one
@@ -6117,7 +6058,16 @@ __webpack_require__.r(__webpack_exports__);
 // be stripped if there is no content security policy response header that includes a nonce.
 if(nonce&&!oldTag.getAttribute(`nonce`)){const cloneTag=newTag.cloneNode(true);cloneTag.setAttribute(`nonce`,``);cloneTag.nonce=nonce;return nonce===oldTag.nonce&&oldTag.isEqualNode(cloneTag);}}return oldTag.isEqualNode(newTag);}function diffNodes({oldNodes,newNodes,onStale,onNew}){for(const existingHeadElement of oldNodes){const indexInNewNodes=newNodes.findIndex(e=>isEqualNode(e,existingHeadElement));if(indexInNewNodes===-1){onStale(existingHeadElement);}else{// this node is re-created as-is, so we keep old node, and remove it from list of new nodes (as we handled it already here)
 newNodes.splice(indexInNewNodes,1);}}// remaing new nodes didn't have matching old node, so need to be added
-for(const newNode of newNodes){onNew(newNode);}}
+for(const newNode of newNodes){onNew(newNode);}}function getValidHeadNodesAndAttributes(rootNode,htmlAndBodyAttributes={html:{},body:{}}){const seenIds=new Map();const validHeadNodes=[];// Filter out non-element nodes before looping since we don't care about them
+for(const node of rootNode.childNodes){var _node$attributes,_node$attributes$id;const nodeName=node.nodeName.toLowerCase();const id=(_node$attributes=node.attributes)===null||_node$attributes===void 0?void 0:(_node$attributes$id=_node$attributes.id)===null||_node$attributes$id===void 0?void 0:_node$attributes$id.value;if(!isElementType(node))continue;if(isValidNodeName(nodeName)){// <html> and <body> tags are treated differently, in that we don't  render them, we only  extract the attributes and apply them separetely
+if(nodeName===`html`||nodeName===`body`){for(const attribute of node.attributes){htmlAndBodyAttributes[nodeName]={...htmlAndBodyAttributes[nodeName],[attribute.name]:attribute.value};}}else{let clonedNode=node.cloneNode(true);clonedNode.setAttribute(`data-gatsby-head`,true);// // This is hack to make script tags work
+if(clonedNode.nodeName.toLowerCase()===`script`){clonedNode=massageScript(clonedNode);}// Duplicate ids are not allowed in the head, so we need to dedupe them
+if(id){if(!seenIds.has(id)){validHeadNodes.push(clonedNode);seenIds.set(id,validHeadNodes.length-1);}else{var _validHeadNodes$index;const indexOfPreviouslyInsertedNode=seenIds.get(id);(_validHeadNodes$index=validHeadNodes[indexOfPreviouslyInsertedNode].parentNode)===null||_validHeadNodes$index===void 0?void 0:_validHeadNodes$index.removeChild(validHeadNodes[indexOfPreviouslyInsertedNode]);validHeadNodes[indexOfPreviouslyInsertedNode]=clonedNode;}}else{validHeadNodes.push(clonedNode);}}}else{warnForInvalidTag(nodeName);}if(node.childNodes.length){validHeadNodes.push(...getValidHeadNodesAndAttributes(node,htmlAndBodyAttributes).validHeadNodes);}}return{validHeadNodes,htmlAndBodyAttributes};}function massageScript(node){const script=document.createElement(`script`);for(const attr of node.attributes){script.setAttribute(attr.name,attr.value);}script.innerHTML=node.innerHTML;return script;}function isValidNodeName(nodeName){return constants_VALID_NODE_NAMES.includes(nodeName);}/*
+ * For Head, we only care about element nodes(type = 1), so this util is used to skip over non-element nodes
+ * For Node type, see https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
+ */function isElementType(node){return node.nodeType===1;}/**
+ * Removes all the head elements that were added by `Head`
+ */function removePrevHeadElements(){const prevHeadNodes=document.querySelectorAll(`[data-gatsby-head]`);for(const node of prevHeadNodes){node.parentNode.removeChild(node);}}function applyHtmlAndBodyAttributes(htmlAndBodyAttributes){if(!htmlAndBodyAttributes)return;const{html,body}=htmlAndBodyAttributes;const htmlElement=document.querySelector(`html`);if(htmlElement){Object.entries(html).forEach(([attributeName,attributeValue])=>{htmlElement.setAttribute(attributeName,attributeValue);});}const bodyElement=document.querySelector(`body`);if(bodyElement){Object.entries(body).forEach(([attributeName,attributeValue])=>{bodyElement.setAttribute(attributeName,attributeValue);});}}function removeHtmlAndBodyAttributes(htmlAndBodyattributeList){if(!htmlAndBodyattributeList)return;const{html,body}=htmlAndBodyattributeList;if(html){const htmlElement=document.querySelector(`html`);html.forEach(attributeName=>{if(htmlElement){htmlElement.removeAttribute(attributeName);}});}if(body){const bodyElement=document.querySelector(`body`);body.forEach(attributeName=>{if(bodyElement){bodyElement.removeAttribute(attributeName);}});}}
 
 /***/ }),
 
@@ -9791,7 +9741,7 @@ module.exports = _setPrototypeOf, module.exports.__esModule = true, module.expor
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
-const PartytownSnippet = "/* Partytown 0.5.4 - MIT builder.io */\n!function(t,e,n,i,r,o,a,d,s,c,p,l){function u(){l||(l=1,\"/\"==(a=(o.lib||\"/~partytown/\")+(o.debug?\"debug/\":\"\"))[0]&&(s=e.querySelectorAll('script[type=\"text/partytown\"]'),i!=t?i.dispatchEvent(new CustomEvent(\"pt1\",{detail:t})):(d=setTimeout(w,1e4),e.addEventListener(\"pt0\",f),r?h(1):n.serviceWorker?n.serviceWorker.register(a+(o.swPath||\"partytown-sw.js\"),{scope:a}).then((function(t){t.active?h():t.installing&&t.installing.addEventListener(\"statechange\",(function(t){\"activated\"==t.target.state&&h()}))}),console.error):w())))}function h(t){c=e.createElement(t?\"script\":\"iframe\"),t||(c.setAttribute(\"style\",\"display:block;width:0;height:0;border:0;visibility:hidden\"),c.setAttribute(\"aria-hidden\",!0)),c.src=a+\"partytown-\"+(t?\"atomics.js?v=0.5.4\":\"sandbox-sw.html?\"+Date.now()),e.body.appendChild(c)}function w(t,n){for(f(),t=0;t<s.length;t++)(n=e.createElement(\"script\")).innerHTML=s[t].innerHTML,e.head.appendChild(n);c&&c.parentNode.removeChild(c)}function f(){clearTimeout(d)}o=t.partytown||{},i==t&&(o.forward||[]).map((function(e){p=t,e.split(\".\").map((function(e,n,i){p=p[i[n]]=n+1<i.length?\"push\"==i[n+1]?[]:p[i[n]]||{}:function(){(t._ptf=t._ptf||[]).push(i,arguments)}}))})),\"complete\"==e.readyState?u():(t.addEventListener(\"DOMContentLoaded\",u),t.addEventListener(\"load\",u))}(window,document,navigator,top,window.crossOriginIsolated);";
+const PartytownSnippet = "/* Partytown 0.7.5 - MIT builder.io */\n!function(t,e,n,i,r,o,a,d,s,c,p,l){function u(){l||(l=1,\"/\"==(a=(o.lib||\"/~partytown/\")+(o.debug?\"debug/\":\"\"))[0]&&(s=e.querySelectorAll('script[type=\"text/partytown\"]'),i!=t?i.dispatchEvent(new CustomEvent(\"pt1\",{detail:t})):(d=setTimeout(f,1e4),e.addEventListener(\"pt0\",w),r?h(1):n.serviceWorker?n.serviceWorker.register(a+(o.swPath||\"partytown-sw.js\"),{scope:a}).then((function(t){t.active?h():t.installing&&t.installing.addEventListener(\"statechange\",(function(t){\"activated\"==t.target.state&&h()}))}),console.error):f())))}function h(t){c=e.createElement(t?\"script\":\"iframe\"),t||(c.setAttribute(\"style\",\"display:block;width:0;height:0;border:0;visibility:hidden\"),c.setAttribute(\"aria-hidden\",!0)),c.src=a+\"partytown-\"+(t?\"atomics.js?v=0.7.5\":\"sandbox-sw.html?\"+Date.now()),e.body.appendChild(c)}function f(n,r){for(w(),i==t&&(o.forward||[]).map((function(e){delete t[e.split(\".\")[0]]})),n=0;n<s.length;n++)(r=e.createElement(\"script\")).innerHTML=s[n].innerHTML,e.head.appendChild(r);c&&c.parentNode.removeChild(c)}function w(){clearTimeout(d)}o=t.partytown||{},i==t&&(o.forward||[]).map((function(e){p=t,e.split(\".\").map((function(e,n,i){p=p[i[n]]=n+1<i.length?\"push\"==i[n+1]?[]:p[i[n]]||{}:function(){(t._ptf=t._ptf||[]).push(i,arguments)}}))})),\"complete\"==e.readyState?u():(t.addEventListener(\"DOMContentLoaded\",u),t.addEventListener(\"load\",u))}(window,document,navigator,top,window.crossOriginIsolated);";
 
 const createSnippet = (config, snippetCode) => {
     const { forward = [], ...filteredConfig } = config || {};
@@ -9942,7 +9892,7 @@ module.exports = JSON.parse('{"amp":"&","apos":"\'","gt":">","lt":"<","quot":"\\
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"gatsby","description":"Blazing fast modern site generator for React","version":"5.3.3","author":"Kyle Mathews <mathews.kyle@gmail.com>","bin":{"gatsby":"./cli.js"},"bugs":{"url":"https://github.com/gatsbyjs/gatsby/issues"},"dependencies":{"@babel/code-frame":"^7.14.0","@babel/core":"^7.15.5","@babel/eslint-parser":"^7.15.4","@babel/helper-plugin-utils":"^7.14.5","@babel/parser":"^7.15.5","@babel/runtime":"^7.15.4","@babel/traverse":"^7.15.4","@babel/types":"^7.15.4","@builder.io/partytown":"^0.5.2","@gatsbyjs/reach-router":"^2.0.0","@gatsbyjs/webpack-hot-middleware":"^2.25.2","@graphql-codegen/add":"^3.1.1","@graphql-codegen/core":"^2.5.1","@graphql-codegen/plugin-helpers":"^2.4.2","@graphql-codegen/typescript":"^2.4.8","@graphql-codegen/typescript-operations":"^2.3.5","@graphql-tools/code-file-loader":"^7.2.14","@graphql-tools/load":"^7.5.10","@jridgewell/trace-mapping":"^0.3.13","@nodelib/fs.walk":"^1.2.8","@parcel/cache":"2.8.1","@parcel/core":"2.8.1","@pmmmwh/react-refresh-webpack-plugin":"^0.5.7","@types/http-proxy":"^1.17.7","@typescript-eslint/eslint-plugin":"^4.33.0","@typescript-eslint/parser":"^4.33.0","@vercel/webpack-asset-relocator-loader":"^1.7.0","acorn-loose":"^8.3.0","acorn-walk":"^8.2.0","address":"1.1.2","anser":"^2.1.0","autoprefixer":"^10.4.0","axios":"^0.21.1","babel-jsx-utils":"^1.1.0","babel-loader":"^8.2.3","babel-plugin-add-module-exports":"^1.0.4","babel-plugin-dynamic-import-node":"^2.3.3","babel-plugin-lodash":"^3.3.4","babel-plugin-remove-graphql-queries":"^5.3.1","babel-preset-gatsby":"^3.3.1","better-opn":"^2.1.1","bluebird":"^3.7.2","browserslist":"^4.17.5","cache-manager":"^2.11.1","chalk":"^4.1.2","chokidar":"^3.5.3","common-tags":"^1.8.0","compression":"^1.7.4","cookie":"^0.4.1","core-js":"^3.22.3","cors":"^2.8.5","css-loader":"^5.2.7","css-minimizer-webpack-plugin":"^2.0.0","css.escape":"^1.5.1","date-fns":"^2.25.0","debug":"^3.2.7","deepmerge":"^4.2.2","detect-port":"^1.3.0","devcert":"^1.2.0","dotenv":"^8.6.0","enhanced-resolve":"^5.8.3","error-stack-parser":"^2.1.4","eslint":"^7.32.0","eslint-config-react-app":"^6.0.0","eslint-plugin-flowtype":"^5.10.0","eslint-plugin-import":"^2.26.0","eslint-plugin-jsx-a11y":"^6.6.1","eslint-plugin-react":"^7.30.1","eslint-plugin-react-hooks":"^4.6.0","eslint-webpack-plugin":"^2.7.0","event-source-polyfill":"1.0.25","execa":"^5.1.1","express":"^4.17.1","express-http-proxy":"^1.6.3","fastest-levenshtein":"^1.0.12","fastq":"^1.13.0","file-loader":"^6.2.0","find-cache-dir":"^3.3.2","fs-exists-cached":"1.0.0","fs-extra":"^10.1.0","gatsby-cli":"^5.3.1","gatsby-core-utils":"^4.3.1","gatsby-graphiql-explorer":"^3.3.0","gatsby-legacy-polyfills":"^3.3.0","gatsby-link":"^5.3.1","gatsby-page-utils":"^3.3.1","gatsby-parcel-config":"1.3.1","gatsby-plugin-page-creator":"^5.3.1","gatsby-plugin-typescript":"^5.3.1","gatsby-plugin-utils":"^4.3.1","gatsby-react-router-scroll":"^6.3.0","gatsby-script":"^2.3.0","gatsby-telemetry":"^4.3.1","gatsby-worker":"^2.3.0","glob":"^7.2.3","globby":"^11.1.0","got":"^11.8.5","graphql":"^16.6.0","graphql-compose":"^9.0.9","graphql-http":"^1.7.0","graphql-tag":"^2.12.6","hasha":"^5.2.2","invariant":"^2.2.4","is-relative":"^1.0.0","is-relative-url":"^3.0.0","joi":"^17.4.2","json-loader":"^0.5.7","latest-version":"^7.0.0","lmdb":"2.5.3","lodash":"^4.17.21","md5-file":"^5.0.0","meant":"^1.0.3","memoizee":"^0.4.15","micromatch":"^4.0.4","mime":"^2.5.2","mini-css-extract-plugin":"1.6.2","mitt":"^1.2.0","moment":"^2.29.1","multer":"^1.4.5-lts.1","node-fetch":"^2.6.6","node-html-parser":"^5.3.3","normalize-path":"^3.0.0","null-loader":"^4.0.1","opentracing":"^0.14.5","p-defer":"^3.0.0","parseurl":"^1.3.3","physical-cpu-count":"^2.0.0","platform":"^1.3.6","postcss":"^8.3.11","postcss-flexbugs-fixes":"^5.0.2","postcss-loader":"^5.3.0","prompts":"^2.4.2","prop-types":"^15.7.2","query-string":"^6.14.1","raw-loader":"^4.0.2","react-dev-utils":"^12.0.1","react-refresh":"^0.14.0","react-server-dom-webpack":"0.0.0-experimental-c8b778b7f-20220825","redux":"4.1.2","redux-thunk":"^2.4.0","resolve-from":"^5.0.0","semver":"^7.3.8","shallow-compare":"^1.2.2","signal-exit":"^3.0.5","slugify":"^1.6.1","socket.io":"3.1.2","socket.io-client":"3.1.3","st":"^2.0.0","stack-trace":"^0.0.10","string-similarity":"^1.2.2","strip-ansi":"^6.0.1","style-loader":"^2.0.0","terser-webpack-plugin":"^5.2.4","tmp":"^0.2.1","true-case-path":"^2.2.1","type-of":"^2.0.1","url-loader":"^4.1.1","uuid":"^8.3.2","webpack":"^5.61.0","webpack-dev-middleware":"^4.3.0","webpack-merge":"^5.8.0","webpack-stats-plugin":"^1.0.3","webpack-virtual-modules":"^0.3.2","xstate":"^4.34.0","yaml-loader":"^0.6.0"},"devDependencies":{"@babel/cli":"^7.15.4","@babel/helper-plugin-utils":"^7.14.5","@babel/register":"^7.15.3","@types/babel-core":"^6.25.7","@types/eslint":"^8.2.1","@types/estree":"^1.0.0","@types/express":"^4.17.13","@types/express-http-proxy":"^1.6.3","@types/micromatch":"^4.0.1","@types/normalize-path":"^3.0.0","@types/reach__router":"^1.3.5","@types/react-dom":"^18.0.6","@types/semver":"^7.3.13","@types/sharp":"^0.31.0","@types/signal-exit":"^3.0.0","@types/string-similarity":"^4.0.0","@types/tmp":"^0.2.0","@types/webpack-virtual-modules":"^0.1.1","babel-preset-gatsby-package":"^3.3.0","copyfiles":"^2.3.0","cross-env":"^7.0.3","documentation":"^13.1.0","react":"^18.2.0","react-dom":"^18.2.0","rimraf":"^3.0.2","typescript":"^4.9.3","xhr-mock":"^2.5.1","zipkin":"^0.22.0","zipkin-javascript-opentracing":"^3.0.0","zipkin-transport-http":"^0.22.0"},"optionalDependencies":{"gatsby-sharp":"^1.3.0"},"engines":{"node":">=18.0.0"},"files":["apis.json","ipc.json","cache-dir/","cli.js","dist/","graphql.js","graphql.d.ts","reporter.js","reporter.d.ts","index.d.ts","scripts/postinstall.js","utils.js","internal.js","internal.d.ts","webpack.js","webpack.d.ts","!**/__tests__/"],"homepage":"https://github.com/gatsbyjs/gatsby/tree/master/packages/gatsby#readme","keywords":["blog","generator","jekyll","markdown","react","ssg","website"],"license":"MIT","main":"cache-dir/commonjs/gatsby-browser-entry.js","module":"cache-dir/gatsby-browser-entry.js","peerDependencies":{"react":"^18.0.0 || ^0.0.0","react-dom":"^18.0.0 || ^0.0.0"},"repository":{"type":"git","url":"git+https://github.com/gatsbyjs/gatsby.git"},"resolutions":{"graphql":"^16.6.0"},"scripts":{"build":"npm run build:types && npm run build:src && npm run build:internal-plugins && npm run build:rawfiles && npm run build:cjs","postbuild":"node scripts/output-api-file.js","build:internal-plugins":"copyfiles -u 1 src/internal-plugins/**/package.json dist","build:rawfiles":"copyfiles -u 1 src/internal-plugins/**/raw_* dist","build:cjs":"babel cache-dir --out-dir cache-dir/commonjs --ignore \\"**/__tests__\\" --ignore \\"**/__mocks__\\" && copyfiles -u 1 cache-dir/**/*.json cache-dir/commonjs","build:src":"babel src --out-dir dist --source-maps --verbose --ignore \\"**/gatsby-cli.js,src/internal-plugins/dev-404-page/raw_dev-404-page.js,**/__tests__,**/__mocks__\\" --extensions \\".ts,.tsx,.js\\"","build:types":"tsc --emitDeclarationOnly --declaration --declarationDir dist && node scripts/check-declaration.js","clean-test-bundles":"find test/ -type f -name bundle.js* -exec rm -rf {} +","prebuild":"rimraf dist && rimraf cache-dir/commonjs","postinstall":"node scripts/postinstall.js","prepare":"cross-env NODE_ENV=production npm run build","watch":"rimraf dist && mkdir dist && npm run build:internal-plugins && npm run build:rawfiles && npm run build:src -- --watch","version":"node ../../scripts/pin-version.js","typecheck":"tsc --noEmit"},"types":"index.d.ts","yargs":{"boolean-negation":false},"gitHead":"da692c77a711bccec2866d863c0f221f81a7dc2c"}');
+module.exports = JSON.parse('{"name":"gatsby","description":"Blazing fast modern site generator for React","version":"5.6.0","author":"Kyle Mathews <mathews.kyle@gmail.com>","bin":{"gatsby":"./cli.js"},"bugs":{"url":"https://github.com/gatsbyjs/gatsby/issues"},"dependencies":{"@babel/code-frame":"^7.18.6","@babel/core":"^7.20.12","@babel/eslint-parser":"^7.19.1","@babel/helper-plugin-utils":"^7.20.2","@babel/parser":"^7.20.13","@babel/runtime":"^7.20.13","@babel/traverse":"^7.20.13","@babel/types":"^7.20.7","@builder.io/partytown":"^0.7.5","@gatsbyjs/reach-router":"^2.0.1","@gatsbyjs/webpack-hot-middleware":"^2.25.3","@graphql-codegen/add":"^3.2.3","@graphql-codegen/core":"^2.6.8","@graphql-codegen/plugin-helpers":"^2.7.2","@graphql-codegen/typescript":"^2.8.7","@graphql-codegen/typescript-operations":"^2.5.12","@graphql-tools/code-file-loader":"^7.3.16","@graphql-tools/load":"^7.8.10","@jridgewell/trace-mapping":"^0.3.17","@nodelib/fs.walk":"^1.2.8","@parcel/cache":"2.8.3","@parcel/core":"2.8.3","@pmmmwh/react-refresh-webpack-plugin":"^0.5.10","@types/http-proxy":"^1.17.9","@typescript-eslint/eslint-plugin":"^4.33.0","@typescript-eslint/parser":"^4.33.0","@vercel/webpack-asset-relocator-loader":"^1.7.3","acorn-loose":"^8.3.0","acorn-walk":"^8.2.0","address":"1.2.2","anser":"^2.1.1","autoprefixer":"^10.4.13","axios":"^0.21.1","babel-jsx-utils":"^1.1.0","babel-loader":"^8.3.0","babel-plugin-add-module-exports":"^1.0.4","babel-plugin-dynamic-import-node":"^2.3.3","babel-plugin-lodash":"^3.3.4","babel-plugin-remove-graphql-queries":"^5.6.0","babel-preset-gatsby":"^3.6.0","better-opn":"^2.1.1","bluebird":"^3.7.2","browserslist":"^4.21.4","cache-manager":"^2.11.1","chalk":"^4.1.2","chokidar":"^3.5.3","common-tags":"^1.8.2","compression":"^1.7.4","cookie":"^0.5.0","core-js":"^3.22.3","cors":"^2.8.5","css-loader":"^5.2.7","css-minimizer-webpack-plugin":"^2.0.0","css.escape":"^1.5.1","date-fns":"^2.29.3","debug":"^4.3.4","deepmerge":"^4.3.0","detect-port":"^1.5.1","devcert":"^1.2.2","dotenv":"^8.6.0","enhanced-resolve":"^5.12.0","error-stack-parser":"^2.1.4","eslint":"^7.32.0","eslint-config-react-app":"^6.0.0","eslint-plugin-flowtype":"^5.10.0","eslint-plugin-import":"^2.27.5","eslint-plugin-jsx-a11y":"^6.7.1","eslint-plugin-react":"^7.31.11","eslint-plugin-react-hooks":"^4.6.0","eslint-webpack-plugin":"^2.7.0","event-source-polyfill":"1.0.31","execa":"^5.1.1","express":"^4.18.2","express-http-proxy":"^1.6.3","fastest-levenshtein":"^1.0.16","fastq":"^1.15.0","file-loader":"^6.2.0","find-cache-dir":"^3.3.2","fs-exists-cached":"1.0.0","fs-extra":"^11.1.0","gatsby-cli":"^5.6.0","gatsby-core-utils":"^4.6.0","gatsby-graphiql-explorer":"^3.6.0","gatsby-legacy-polyfills":"^3.6.0","gatsby-link":"^5.6.0","gatsby-page-utils":"^3.6.0","gatsby-parcel-config":"^1.6.0","gatsby-plugin-page-creator":"^5.6.0","gatsby-plugin-typescript":"^5.6.0","gatsby-plugin-utils":"^4.6.0","gatsby-react-router-scroll":"^6.6.0","gatsby-script":"^2.6.0","gatsby-telemetry":"^4.6.0","gatsby-worker":"^2.6.0","glob":"^7.2.3","globby":"^11.1.0","got":"^11.8.6","graphql":"^16.6.0","graphql-compose":"^9.0.10","graphql-http":"^1.13.0","graphql-tag":"^2.12.6","hasha":"^5.2.2","invariant":"^2.2.4","is-relative":"^1.0.0","is-relative-url":"^3.0.0","joi":"^17.7.0","json-loader":"^0.5.7","latest-version":"^7.0.0","lmdb":"2.5.3","lodash":"^4.17.21","meant":"^1.0.3","memoizee":"^0.4.15","micromatch":"^4.0.5","mime":"^3.0.0","mini-css-extract-plugin":"1.6.2","mitt":"^1.2.0","moment":"^2.29.4","multer":"^1.4.5-lts.1","node-fetch":"^2.6.8","node-html-parser":"^5.4.2","normalize-path":"^3.0.0","null-loader":"^4.0.1","opentracing":"^0.14.7","p-defer":"^3.0.0","parseurl":"^1.3.3","physical-cpu-count":"^2.0.0","platform":"^1.3.6","postcss":"^8.4.21","postcss-flexbugs-fixes":"^5.0.2","postcss-loader":"^5.3.0","prompts":"^2.4.2","prop-types":"^15.8.1","query-string":"^6.14.1","raw-loader":"^4.0.2","react-dev-utils":"^12.0.1","react-refresh":"^0.14.0","react-server-dom-webpack":"0.0.0-experimental-c8b778b7f-20220825","redux":"4.2.1","redux-thunk":"^2.4.2","resolve-from":"^5.0.0","semver":"^7.3.8","shallow-compare":"^1.2.2","signal-exit":"^3.0.7","slugify":"^1.6.5","socket.io":"4.5.4","socket.io-client":"4.5.4","st":"^2.0.0","stack-trace":"^0.0.10","string-similarity":"^1.2.2","strip-ansi":"^6.0.1","style-loader":"^2.0.0","terser-webpack-plugin":"^5.3.6","tmp":"^0.2.1","true-case-path":"^2.2.1","type-of":"^2.0.1","url-loader":"^4.1.1","uuid":"^8.3.2","webpack":"^5.75.0","webpack-dev-middleware":"^4.3.0","webpack-merge":"^5.8.0","webpack-stats-plugin":"^1.1.1","webpack-virtual-modules":"^0.5.0","xstate":"^4.35.3","yaml-loader":"^0.8.0"},"devDependencies":{"@babel/cli":"^7.20.7","@babel/helper-plugin-utils":"^7.20.2","@babel/register":"^7.18.9","@types/babel-core":"^6.25.7","@types/eslint":"^8.4.10","@types/estree":"^1.0.0","@types/express":"^4.17.16","@types/express-http-proxy":"^1.6.3","@types/micromatch":"^4.0.2","@types/normalize-path":"^3.0.0","@types/reach__router":"^1.3.11","@types/react-dom":"^18.0.10","@types/semver":"^7.3.13","@types/sharp":"^0.31.1","@types/signal-exit":"^3.0.1","@types/string-similarity":"^4.0.0","@types/tmp":"^0.2.3","@types/webpack-virtual-modules":"^0.1.1","babel-preset-gatsby-package":"^3.6.0","copyfiles":"^2.4.1","cross-env":"^7.0.3","documentation":"^13.2.5","react":"^18.2.0","react-dom":"^18.2.0","rimraf":"^3.0.2","typescript":"^4.9.4","xhr-mock":"^2.5.1","zipkin":"^0.22.0","zipkin-javascript-opentracing":"^3.0.0","zipkin-transport-http":"^0.22.0"},"optionalDependencies":{"gatsby-sharp":"^1.6.0"},"engines":{"node":">=18.0.0"},"files":["apis.json","ipc.json","cache-dir/","cli.js","dist/","graphql.js","graphql.d.ts","reporter.js","reporter.d.ts","index.d.ts","scripts/postinstall.js","utils.js","internal.js","internal.d.ts","webpack.js","webpack.d.ts","!**/__tests__/"],"homepage":"https://github.com/gatsbyjs/gatsby/tree/master/packages/gatsby#readme","keywords":["blog","generator","jekyll","markdown","react","ssg","website"],"license":"MIT","main":"cache-dir/commonjs/gatsby-browser-entry.js","module":"cache-dir/gatsby-browser-entry.js","peerDependencies":{"react":"^18.0.0 || ^0.0.0","react-dom":"^18.0.0 || ^0.0.0"},"repository":{"type":"git","url":"git+https://github.com/gatsbyjs/gatsby.git"},"resolutions":{"graphql":"^16.6.0"},"scripts":{"build":"npm run build:types && npm run build:src && npm run build:internal-plugins && npm run build:rawfiles && npm run build:cjs","postbuild":"node scripts/output-api-file.js","build:internal-plugins":"copyfiles -u 1 src/internal-plugins/**/package.json dist","build:rawfiles":"copyfiles -u 1 src/internal-plugins/**/raw_* dist","build:cjs":"babel cache-dir --out-dir cache-dir/commonjs --ignore \\"**/__tests__\\" --ignore \\"**/__mocks__\\" && copyfiles -u 1 cache-dir/**/*.json cache-dir/commonjs","build:src":"babel src --out-dir dist --source-maps --verbose --ignore \\"**/gatsby-cli.js,src/internal-plugins/dev-404-page/raw_dev-404-page.js,**/__tests__,**/__mocks__\\" --extensions \\".ts,.tsx,.js\\"","build:types":"tsc --emitDeclarationOnly --declaration --declarationDir dist && node scripts/check-declaration.js","clean-test-bundles":"find test/ -type f -name bundle.js* -exec rm -rf {} +","prebuild":"rimraf dist && rimraf cache-dir/commonjs","postinstall":"node scripts/postinstall.js","prepare":"cross-env NODE_ENV=production npm run build","watch":"rimraf dist && mkdir dist && npm run build:internal-plugins && npm run build:rawfiles && npm run build:src -- --watch","version":"node ../../scripts/pin-version.js","typecheck":"tsc --noEmit"},"types":"index.d.ts","yargs":{"boolean-negation":false},"gitHead":"8419b3490e937f76f1264505e9e30032adac9fff"}');
 
 /***/ })
 
@@ -10144,7 +10094,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "sanitizeComponents": () => (/* binding */ sanitizeComponents)
 /* harmony export */ });
 /* harmony import */ var react_server_dom_webpack_writer_node_server__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2442);
-const React=__webpack_require__(795);const path=__webpack_require__(1423);const{renderToString,renderToStaticMarkup,renderToPipeableStream}=__webpack_require__(922);const{ServerLocation,Router,isRedirect}=__webpack_require__(7896);const merge=__webpack_require__(9996);const{StaticQueryContext}=__webpack_require__(7076);const fs=__webpack_require__(8439);const{WritableAsPromise}=__webpack_require__(1034);const{RouteAnnouncerProps}=__webpack_require__(236);const{apiRunner,apiRunnerAsync}=__webpack_require__(4067);const asyncRequires=__webpack_require__(5418);const{version:gatsbyVersion}=__webpack_require__(1741);const{grabMatchParams}=__webpack_require__(9755);const{headHandlerForSSR}=__webpack_require__(923);const{SlicesResultsContext,SlicesContext,SlicesMapContext,SlicesPropsContext}=__webpack_require__(8995);const{ServerSliceRenderer}=__webpack_require__(7529);// we want to force posix-style joins, so Windows doesn't produce backslashes for urls
+const React=__webpack_require__(795);const path=__webpack_require__(1423);const{renderToStaticMarkup,renderToPipeableStream}=__webpack_require__(922);const{ServerLocation,Router,isRedirect}=__webpack_require__(7896);const merge=__webpack_require__(9996);const{StaticQueryContext}=__webpack_require__(7076);const fs=__webpack_require__(8439);const{WritableAsPromise}=__webpack_require__(1034);const{RouteAnnouncerProps}=__webpack_require__(236);const{apiRunner,apiRunnerAsync}=__webpack_require__(4067);const asyncRequires=__webpack_require__(5418);const{version:gatsbyVersion}=__webpack_require__(1741);const{grabMatchParams}=__webpack_require__(9755);const{headHandlerForSSR}=__webpack_require__(923);const{SlicesResultsContext,SlicesContext,SlicesMapContext,SlicesPropsContext}=__webpack_require__(8995);const{ServerSliceRenderer}=__webpack_require__(7529);// we want to force posix-style joins, so Windows doesn't produce backslashes for urls
 const{join}=path.posix;const testRequireError=(moduleName,err)=>{const regex=new RegExp(`Error: Cannot find module\\s.${moduleName}`);const firstLine=err.toString().split(`\n`)[0];return regex.test(firstLine);};let Html;try{Html=__webpack_require__(Object(function webpackMissingModule() { var e = new Error("Cannot find module '../src/html'"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));}catch(err){if(testRequireError(`../src/html`,err)){Html=__webpack_require__(9079);}else{throw err;}}Html=Html&&Html.__esModule?Html.default:Html;const getPageDataPath=path=>{const fixedPagePath=path===`/`?`index`:path;return join(`page-data`,fixedPagePath,`page-data.json`);};const createElement=React.createElement;const sanitizeComponents=components=>{const componentsArray=[].concat(components).flat(Infinity).filter(Boolean);return componentsArray.map(component=>{// Ensure manifest is always loaded from content server
 // And not asset server when an assetPrefix is used
 if(false){}return component;});};function deepMerge(a,b){const combineMerge=(target,source,options)=>{const destination=target.slice();source.forEach((item,index)=>{if(typeof destination[index]===`undefined`){destination[index]=options.cloneUnlessOtherwiseSpecified(item,options);}else if(options.isMergeableObject(item)){destination[index]=merge(target[index],item,options);}else if(target.indexOf(item)===-1){destination.push(item);}});return destination;};return merge(a,b,{arrayMerge:combineMerge});}/**
@@ -10159,7 +10109,7 @@ const myErrorHolder={name:`Usage of loadPageDataSync for page other than current
 return null;}}const replaceBodyHTMLString=body=>{bodyHtml=body;};const setHeadComponents=components=>{headComponents=headComponents.concat(sanitizeComponents(components));};const setHtmlAttributes=attributes=>{// TODO - we should remove deep merges
 htmlAttributes=deepMerge(htmlAttributes,attributes);};const setBodyAttributes=attributes=>{// TODO - we should remove deep merges
 bodyAttributes=deepMerge(bodyAttributes,attributes);};const setPreBodyComponents=components=>{preBodyComponents=preBodyComponents.concat(sanitizeComponents(components));};const setPostBodyComponents=components=>{postBodyComponents=postBodyComponents.concat(sanitizeComponents(components));};const setBodyProps=props=>{// TODO - we should remove deep merges
-bodyProps=deepMerge({},bodyProps,props);};const getHeadComponents=()=>headComponents;const replaceHeadComponents=components=>{headComponents=sanitizeComponents(components);};const getPreBodyComponents=()=>preBodyComponents;const replacePreBodyComponents=components=>{preBodyComponents=sanitizeComponents(components);};const getPostBodyComponents=()=>postBodyComponents;const replacePostBodyComponents=components=>{postBodyComponents=sanitizeComponents(components);};const{componentChunkName,slicesMap}=pageData;const pageComponent=await asyncRequires.components[componentChunkName]();headHandlerForSSR({pageComponent,setHeadComponents,staticQueryContext,pageData,pagePath});class RouteHandler extends React.Component{render(){var _pageData$result,_pageData$result$page;const props={...this.props,...pageData.result,params:{...grabMatchParams(this.props.location.pathname),...(((_pageData$result=pageData.result)===null||_pageData$result===void 0?void 0:(_pageData$result$page=_pageData$result.pageContext)===null||_pageData$result$page===void 0?void 0:_pageData$result$page.__params)||{})}};const pageElement=createElement(pageComponent.default,props);const wrappedPage=apiRunner(`wrapPageElement`,{element:pageElement,props},pageElement,({result})=>{return{element:result,props};}).pop();return wrappedPage;}}const routerElement=/*#__PURE__*/React.createElement(ServerLocation,{url:`${""}${pagePath}`},/*#__PURE__*/React.createElement(Router,{id:"gatsby-focus-wrapper",baseuri:""},/*#__PURE__*/React.createElement(RouteHandler,{path:"/*"})),/*#__PURE__*/React.createElement("div",RouteAnnouncerProps));const sliceProps={};let body=apiRunner(`wrapRootElement`,{element:routerElement,pathname:pagePath},routerElement,({result})=>{return{element:result,pathname:pagePath};}).pop();const slicesContext={// if we're in build now, we know we're on the server
+bodyProps=deepMerge({},bodyProps,props);};const getHeadComponents=()=>headComponents;const replaceHeadComponents=components=>{headComponents=sanitizeComponents(components);};const getPreBodyComponents=()=>preBodyComponents;const replacePreBodyComponents=components=>{preBodyComponents=sanitizeComponents(components);};const getPostBodyComponents=()=>postBodyComponents;const replacePostBodyComponents=components=>{postBodyComponents=sanitizeComponents(components);};const{componentChunkName,slicesMap}=pageData;const pageComponent=await asyncRequires.components[componentChunkName]();class RouteHandler extends React.Component{render(){var _pageData$result,_pageData$result$page;const props={...this.props,...pageData.result,params:{...grabMatchParams(this.props.location.pathname),...(((_pageData$result=pageData.result)===null||_pageData$result===void 0?void 0:(_pageData$result$page=_pageData$result.pageContext)===null||_pageData$result$page===void 0?void 0:_pageData$result$page.__params)||{})}};const pageElement=createElement(pageComponent.default,props);const wrappedPage=apiRunner(`wrapPageElement`,{element:pageElement,props},pageElement,({result})=>{return{element:result,props};}).pop();return wrappedPage;}}const routerElement=/*#__PURE__*/React.createElement(ServerLocation,{url:`${""}${pagePath}`},/*#__PURE__*/React.createElement(Router,{id:"gatsby-focus-wrapper",baseuri:""},/*#__PURE__*/React.createElement(RouteHandler,{path:"/*"})),/*#__PURE__*/React.createElement("div",RouteAnnouncerProps));const sliceProps={};let body=apiRunner(`wrapRootElement`,{element:routerElement,pathname:pagePath},routerElement,({result})=>{return{element:result,pathname:pagePath};}).pop();const slicesContext={// if we're in build now, we know we're on the server
 // otherwise we're in an engine
 renderEnvironment:renderContext.isDuringBuild?`server`:`engines`};if(true){// if we're running in an engine, we need to manually wrap body with
 // the results context to pass the map of slice name to component/data/context
@@ -10168,7 +10118,9 @@ if(slicesContext.renderEnvironment===`engines`){// this is the same name used in
 const slicesDb=new Map();for(const sliceName of Object.values(slicesMap)){const slice=sliceData[sliceName];const{default:SliceComponent}=await getPageChunk(slice);const sliceObject={component:SliceComponent,sliceContext:slice.result.sliceContext,data:slice.result.data};slicesDb.set(sliceName,sliceObject);}body=/*#__PURE__*/React.createElement(SlicesResultsContext.Provider,{value:slicesDb},body);}body=/*#__PURE__*/React.createElement(SlicesContext.Provider,{value:slicesContext},/*#__PURE__*/React.createElement(SlicesPropsContext.Provider,{value:sliceProps},/*#__PURE__*/React.createElement(SlicesMapContext.Provider,{value:slicesMap},body)));}const bodyComponent=/*#__PURE__*/React.createElement(StaticQueryContext.Provider,{value:staticQueryContext},body);// Let the site or plugin render the page component.
 await apiRunnerAsync(`replaceRenderer`,{bodyComponent,replaceBodyHTMLString,setHeadComponents,setHtmlAttributes,setBodyAttributes,setPreBodyComponents,setPostBodyComponents,setBodyProps,pathname:pagePath,pathPrefix:""});// If no one stepped up, we'll handle it.
 if(!bodyHtml){try{const writableStream=new WritableAsPromise();const{pipe}=renderToPipeableStream(bodyComponent,{onAllReady(){pipe(writableStream);},onError(error){writableStream.destroy(error);}});bodyHtml=await writableStream;}catch(e){// ignore @reach/router redirect errors
-if(!isRedirect(e))throw e;}}apiRunner(`onRenderBody`,{setHeadComponents,setHtmlAttributes,setBodyAttributes,setPreBodyComponents,setPostBodyComponents,setBodyProps,pathname:pagePath,loadPageDataSync,bodyHtml,scripts,styles,pathPrefix:""});reversedScripts.forEach(script=>{// Add preload/prefetch <link>s magic comments
+if(!isRedirect(e))throw e;}}apiRunner(`onRenderBody`,{setHeadComponents,setHtmlAttributes,setBodyAttributes,setPreBodyComponents,setPostBodyComponents,setBodyProps,pathname:pagePath,loadPageDataSync,bodyHtml,scripts,styles,pathPrefix:""});// we want to run Head after onRenderBody, so Html and Body attributes
+// from Head wins over global ones from onRenderBody
+headHandlerForSSR({pageComponent,setHeadComponents,setHtmlAttributes,setBodyAttributes,staticQueryContext,pageData,pagePath});reversedScripts.forEach(script=>{// Add preload/prefetch <link>s magic comments
 if(script.shouldGenerateLink){headComponents.push(/*#__PURE__*/React.createElement("link",{as:"script",rel:script.rel,key:script.name,href:`${""}/${script.name}`}));}});reversedStyles.forEach(style=>{// Add <link>s for styles that should be prefetched
 // otherwise, inline as a <style> tag
 if(style.rel===`prefetch`){headComponents.push(/*#__PURE__*/React.createElement("link",{as:"style",rel:style.rel,key:style.name,href:`${""}/${style.name}`}));}else{headComponents.unshift(/*#__PURE__*/React.createElement("style",{"data-href":`${""}/${style.name}`,"data-identity":`gatsby-global-css`,dangerouslySetInnerHTML:{__html:style.content}}));}});// Add page metadata for the current page
